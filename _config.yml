@@ -5,7 +5,7 @@ permalink:           pretty
 relative_permalinks: true
 
 # Setting up GFM with syntax highlighting
-pygments: true
+highlighter: pygments
 markdown: redcarpet
 redcarpet:
   extensions:
@@ -16,10 +16,10 @@ redcarpet:
     - fenced_code_blocks
 
 # Setup
-title:               Poole
-tagline:             The Jekyll Butler
+title:               Wheleph's blog
+tagline:             My random thoughts
 url:                 http://getpoole.com
-paginate:            1
+paginate:            2
 baseurl:             ""
 
 # Assets
@@ -31,9 +31,9 @@ sass:
 
 # About/contact
 author:
-  name:              Mark Otto
-  url:               https://twitter.com/mdo
-  email:             markdotto@gmail.com
+  name:              Volodymyr Sobotovych (wheleph)
+  url:               https://github.com/wheleph
+  email:             wheleph@gmail.com
 
 # Custom vars
 version:             2.0.0

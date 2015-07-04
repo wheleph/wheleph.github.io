@@ -1,9 +1,9 @@
 ---
-layout: default
-title: "test1"
+layout: post
+title: On RabbitMQ automatic acknowledgement and reliable message processing.
 ---
 
-# Rabbit MQ automatic acknowledgement
+# RabbitMQ automatic acknowledgement
 
 One common task when working with RabbitMQ is asynchronous consumption of messages from a given queue. RabbitMQ Java client library (`com.rabbitmq:amqp-client`) allows you to do that via set of overloaded methods `com.rabbitmq.client.Channel.basicConsume`. Here's an example:
 
@@ -145,7 +145,7 @@ This means that **60 messages (40-99) are lost**.
 
 But stats of queue `hello` gathered by [RabbitMQ management plugin](https://www.rabbitmq.com/management.html) explains everything:
 
-![Management plugin screenshot: auto ack](https://raw.githubusercontent.com/wheleph/blog/master/articles/rabbitmq_auto_ack/rabbitmq_auto_ack.png)
+![Management plugin screenshot: auto ack](/assets/rabbitmq_auto_ack.png)
 
 At the top chart you can see that number of queued messages quickly goes up to 100 when `MultipleSend` published its messages. Then it stays at 100 until `ConcurrentRecv` is launched an after that immediately does down. So at 18:07:40 there are 0 messages in the RabbitMQ queue according to the chart but at 18:07:51 only 40 messages got processed according to log of `ConcurrentRecv`. **So it's no longer surprising that after restart of the consumer it doesn't process the rest of the messages. That's because no messages are left in queue!**
 
@@ -222,7 +222,7 @@ This causes broker not to remove a message from the queue until it's got process
 
 And now if we run the very same test with 100 messages in the queue we see the difference:
 
-![Management plugin screenshot: no auto ack](https://raw.githubusercontent.com/wheleph/blog/master/articles/rabbitmq_auto_ack/rabbitmq_no_auto_ack.png)
+![Management plugin screenshot: no auto ack](/assets/rabbitmq_no_auto_ack.png)
 
 Now we see that the number of messages does not drop to 0 immediately but slowly reduces as they get processed. We can do even some math to explain what happens. From the top chart we see that about 40 messages were removed from the queue in 20 seconds which is roughly 2 messages/seconds that is equal to the processing time (0.5 seconds per message). Then starting from 00:38:10 there's a horizontal line at ~60. That's a moment when we stopped `ConcurrentRecv`. But the messages are still in RabbitMQ queue so not surpisingly if we launch the consumer again it starts where it left.
 
