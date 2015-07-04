@@ -1,6 +1,7 @@
 ---
 layout: post
-title: On RabbitMQ automatic acknowledgement and reliable message processing.
+title: On RabbitMQ automatic acknowledgement and reliable message processing
+comments: true
 ---
 
 # RabbitMQ automatic acknowledgement
