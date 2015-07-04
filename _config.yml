@@ -19,7 +19,7 @@ redcarpet:
 title:               Wheleph's blog
 tagline:             My random thoughts
 url:                 http://getpoole.com
-paginate:            2
+paginate:            1
 baseurl:             ""
 
 # Assets
