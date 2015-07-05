@@ -4,7 +4,7 @@ title: On RabbitMQ automatic acknowledgement and reliable message processing
 comments: true
 ---
 
-# RabbitMQ automatic acknowledgement
+## RabbitMQ automatic acknowledgement
 
 One common task when working with RabbitMQ is asynchronous consumption of messages from a given queue. RabbitMQ Java client library (`com.rabbitmq:amqp-client`) allows you to do that via set of overloaded methods `com.rabbitmq.client.Channel.basicConsume`. Here's an example:
 
@@ -26,7 +26,7 @@ Auto acknowledgement frees a developer from the need to explicitly acknowledge i
 
 This article uses `com.rabbitmq:amqp-client` version `3.5.1` and `rabbitmq-server` version `3.5.1-1`.
 
-# Reliability implications of automatic acknowledgements
+## Reliability implications of automatic acknowledgements
 
 Suppose that we have a consumer with auto acknowledgement enabled that is subscribed to queue `hello` and it takes 0.5 second to process a message:
 
@@ -156,7 +156,7 @@ But why the RabbitMQ queue was drained so fast? Well you may know that there's a
 
 The reason is that in our example we use automatic acknowledgement of the messages which sends ack back to the broker as soon as the message is _put_ into the work pool but not when the message is actually _processed_. And if application is shut down while there are still messages waiting for free workers, those messages will be lost (because they are stored in memory).
 
-# Using explicit acknowledgement to avoid lost messages
+## Using explicit acknowledgement to avoid lost messages
 
 An obvious way to fix this problem is to turn off automatic acknowldedgement:
 
