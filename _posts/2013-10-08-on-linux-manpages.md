@@ -4,8 +4,6 @@ title: On Linux manpages
 comments: true
 ---
 
-## On Linux manpages
-
 Today I've upgraded Scala on my Ubuntu 13.04 laptop and just for the sake of curiosity looked inside its folder structure. Among other things I've found a directory with man pages:
 
 ```sh
