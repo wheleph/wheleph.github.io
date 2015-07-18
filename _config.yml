@@ -17,7 +17,6 @@ redcarpet:
 
 # Setup
 title:               Wheleph's blog
-tagline:             My random thoughts
 url:                 http://getpoole.com
 paginate:            1
 baseurl:             ""
@@ -39,3 +38,8 @@ author:
 version:             2.0.0
 github:
   repo:              https://github.com/poole/poole
+
+# This is the list of pages to include in the header of the website.
+pages_list:
+    About: '/about'
+    Feed: '/atom.xml'
