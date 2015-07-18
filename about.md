@@ -8,6 +8,7 @@ title: About
 - Legacy blog: [wheleph.blogspot.com](http://wheleph.blogspot.com/)
 - Github: [wheleph](https://github.com/wheleph/)
 - StackExchange: [wheleph](http://stackexchange.com/users/8634/wheleph)
+- Coursera: [Volodymyr Sobotovych](https://www.coursera.org/user/i/d95b550d44e52a79b159dbc76a4c3b6d)
 - Facebook: [volodymyr.sobotovych](https://www.facebook.com/volodymyr.sobotovych)
 - Google+: [+VolodymyrSobotovych](https://plus.google.com/u/0/+VolodymyrSobotovych)
 - VK: [wheleph](http://vk.com/wheleph)
