@@ -72,8 +72,9 @@ It does the following:
 2. Opens a new channel on that connection
 3. Declares an exchange and queue (if it doesn't exist yet). Binds them.
 4. Subscribes to the given queue
+5. Upon each incoming message it invokes the configured handler that just sleeps for the given amount of time.
 
-Now let's assume that some other program produces messages in that queue. I would expect that those messages are going to be consumed in parallel using a [thread pool](https://www.rabbitmq.com/api-guide.html#consumer-thread-pool) that is behind a Connection.
+Now let's assume that some other program produces messages to that queue. I would expect that those messages are going to be consumed in parallel using the built-in connection [thread pool](https://www.rabbitmq.com/api-guide.html#consumer-thread-pool).
 
 However experiment below shows that it's not the case. `MultipleSend` sends 100 message to the queue:
 
@@ -140,11 +141,11 @@ And the output shows that they are processed by `ConcurrentRecv` in multiple thr
 16:25:55,286 [pool-1-thread-5] ConcurrentRecv - Received (channel 1) Hello world17
 ```
 
-Why does it happen? [API guide](https://www.rabbitmq.com/api-guide.html#consuming) says:
+Why does it happen? [Java client API guide](https://www.rabbitmq.com/api-guide.html#consuming) says:
 
 > Each Channel has its own dispatch thread. For the most common use case of one Consumer per Channel, this means Consumers do not hold up other Consumers. If you have multiple Consumers per Channel be aware that a long-running Consumer may hold up dispatch of callbacks to other Consumers on that Channel.
 
-What it doesn't explicitly says is that the dispatch thread processes incoming messages serially. This is implemented in `com.rabbitmq.client.impl.ConsumerWorkService`.
+What it doesn't explicitly say is that the channel's dispatch thread processes incoming messages serially. This is implemented in `com.rabbitmq.client.impl.ConsumerWorkService`. So if we have a single channel, it has a single dispatch thread and hence all incoming messages are processed serially.
 
 ## Solution 1: use multiple channels
 
@@ -152,7 +153,7 @@ An obvious way to achieve consumption parallelism is to increase the number of l
 
 ## Solution 2: use internal thread pool
 
-Another possible way to solve the problem is to make the consumers very lightweight. The only thing they will do is to put each consumed message in an internal thread pool (separated from the one used by `Connection`) and let Java concurrency framework to do the rest. This approach decouples _consuming_ from _processing_.
+Another possible way to solve the problem is to make the consumers very lightweight. The only thing they will do is to put each consumed message in an internal thread pool (separated from the one used by `Connection`) and let Java concurrency framework to do the rest. This approach decouples _consumption_ from _processing_.
 
 The program below (`ConcurrentRecv2`) implements this approach:
 
@@ -268,4 +269,4 @@ If we launch `ConcurrentRecv2` and then `MultipleSend` from the previous example
 
 Here we can see that at first all messages are quickly consumed from the queue and put into internal thread pool. And afterwards 2 threads (`pool-1-thread-1` and `pool-1-thread-2`) process them concurrently.
 
-One important caveat is that once a message is put into the internal thread pool we have to be careful with it because if JVM exits before it's processed, the messages is essentially lost. To prevent this `ConcurrentRecv2` defines a shutdown hook that prevents JVM exit until all the messages are processed.
+> One important caveat is that once a message is put into the internal thread pool we have to be careful with it because if JVM exits before it's processed, the message is essentially lost. To prevent this `ConcurrentRecv2` defines a shutdown hook that prevents JVM exit until all the messages are processed.
