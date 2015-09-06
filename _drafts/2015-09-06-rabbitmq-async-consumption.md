@@ -1,16 +1,16 @@
 ## Introduction
 
-RabbitMQ is a well-known implementation for AMQP protocol. It allows you to build distributed scalable systems consisting of decoupled components that use asynchronous messaging.
+RabbitMQ is a well-known implementation of AMQP. It allows you to build distributed scalable systems consisting of decoupled components that use asynchronous messaging.
 
 While the following statement is not technically correct, I personally think of RabbitMQ and AMQP as "the modern JMS" or "JMS made cool".
 
-I've played around with RabbitMQ for a while and found that asynchronous consumption of messages can be tricky. __If you don't completely understand the relation between Connection, Channel and BasicConsumer, your consumer may and up being serial and not consume messages in parallel__.
+I've played around with RabbitMQ for a while and found that asynchronous consumption of messages can be tricky. __If you don't completely understand the relation between Connection, Channel and BasicConsumer, your program may not be able to consume messages in parallel__.
 
-This article discusses that possible issue and the way you may overcome it.
+This article discusses that issue and the way you can overcome it.
 
 ## The issue: async consumption may be not that async
 
-Let's say we have class `ConcurrentRecv`:
+Let's say we have the following consumer program (`ConcurrentRecv`):
 
 ```java
 package wheleph.rabbitmq_tutorial.concurrent_consumers;
@@ -66,16 +66,16 @@ public class ConcurrentRecv {
 }
 ```
 
-It does the following stuff:
+It does the following:
 
-1. Opens the new connection
-2. Opens the new channel on that connection
-3. Declares an exchange and queue (if it doesn't exist yet)
+1. Opens a new connection
+2. Opens a new channel on that connection
+3. Declares an exchange and queue (if it doesn't exist yet). Binds them.
 4. Subscribes to the given queue
 
-Now let's assume that someone produces messages in the queue being listened. Well I would expect that those messages are going to be consumed in parallel using a [thread pool](https://www.rabbitmq.com/api-guide.html#consumer-thread-pool) that is behind a Connection.
+Now let's assume that some other program produces messages in that queue. I would expect that those messages are going to be consumed in parallel using a [thread pool](https://www.rabbitmq.com/api-guide.html#consumer-thread-pool) that is behind a Connection.
 
-However experiment show that it's not the case. `MultipleSend` below sends 100 message in the queue:
+However experiment below shows that it's not the case. `MultipleSend` sends 100 message to the queue:
 
 ```java
 package wheleph.rabbitmq_tutorial.concurrent_consumers;
@@ -116,7 +116,7 @@ public class MultipleSend {
 }
 ```
 
-But the output shows that they are processed by `ConcurrentRecv` in multiple threads but not in parallel:
+And the output shows that they are processed by `ConcurrentRecv` in multiple threads but not in parallel:
 
 ```
 16:25:43,255 [main] ConcurrentRecv -  [*] Waiting for messages. To exit press CTRL+C
@@ -140,19 +140,21 @@ But the output shows that they are processed by `ConcurrentRecv` in multiple thr
 16:25:55,286 [pool-1-thread-5] ConcurrentRecv - Received (channel 1) Hello world17
 ```
 
-[API guide](https://www.rabbitmq.com/api-guide.html#consuming) says:
+Why does it happen? [API guide](https://www.rabbitmq.com/api-guide.html#consuming) says:
 
 > Each Channel has its own dispatch thread. For the most common use case of one Consumer per Channel, this means Consumers do not hold up other Consumers. If you have multiple Consumers per Channel be aware that a long-running Consumer may hold up dispatch of callbacks to other Consumers on that Channel.
 
-What it doesn't explicitly say though that the dispatch thread processes incoming messages serially. This is implemented in `com.rabbitmq.client.impl.ConsumerWorkService`.
+What it doesn't explicitly says is that the dispatch thread processes incoming messages serially. This is implemented in `com.rabbitmq.client.impl.ConsumerWorkService`.
 
 ## Solution 1: use multiple channels
 
 An obvious way to achieve consumption parallelism is to increase the number of listening channels. This approach is used by [Spring AMQP](http://projects.spring.io/spring-amqp/) via `org.springframework.amqp.rabbit.listener.SimpleMessageListenerContainer.setConcurrentConsumers(int)`. See this [thread](http://forum.spring.io/forum/spring-projects/integration/amqp/112227-meaning-of-simplemessagelistenercontainer-s-concurrent-consumers).
 
-## Solution 2: use thread pool
+## Solution 2: use internal thread pool
 
-Another possible way to solve the problem is to make the consumers very lightweight. The only thing they will do is to put each consumed message in a separate executor service and let Java concurrency framework to do the rest.
+Another possible way to solve the problem is to make the consumers very lightweight. The only thing they will do is to put each consumed message in an internal thread pool (separated from the one used by `Connection`) and let Java concurrency framework to do the rest. This approach decouples _consuming_ from _processing_.
+
+The program below (`ConcurrentRecv2`) implements this approach:
 
 ```java
 package wheleph.rabbitmq_tutorial.concurrent_consumers;
@@ -264,6 +266,6 @@ If we launch `ConcurrentRecv2` and then `MultipleSend` from the previous example
 16:40:02,617 [pool-1-thread-2] ConcurrentRecv2 - Processed Hello world5
 ```
 
-Here we can see that at first all message were quickly consumed from the queue and put into internal thread pool. And afterwards 2 thread (`pool-1-thread-1` and `pool-1-thread-2`) started processing them concurrently.
+Here we can see that at first all messages are quickly consumed from the queue and put into internal thread pool. And afterwards 2 threads (`pool-1-thread-1` and `pool-1-thread-2`) process them concurrently.
 
-Notice that we need to have a proper shudown hook that waits until all the messages processed.
+One important caveat is that once a message is put into the internal thread pool we have to be careful with it because if JVM exits before it's processed, the messages is essentially lost. To prevent this `ConcurrentRecv2` defines a shutdown hook that prevents JVM exit until all the messages are processed.
