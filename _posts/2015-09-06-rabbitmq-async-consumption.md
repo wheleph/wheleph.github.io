@@ -1,3 +1,9 @@
+---
+layout: post
+title: RabbitMQ async consumption
+comments: true
+---
+
 ## Introduction
 
 RabbitMQ is a well-known implementation of AMQP. It allows you to build distributed scalable systems consisting of decoupled components that use asynchronous messaging.
