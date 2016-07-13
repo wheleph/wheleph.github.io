@@ -90,3 +90,5 @@ $ curl 'http://localhost:5000/v2/mybusybox/tags/list'
 ```
 
 ## Known issues
+
+Docker pre-1.10 generates manifests only using schema 1. So if you push an image, it's going to have only that manifest. And if you try to retrieve the manifest of schema 2 via curl, `accept` header will be effectively ignored and you'll always get back manifest of schema 1. That's because the registry (at least 2.4) does not support conversion from schema 1 to 2.
