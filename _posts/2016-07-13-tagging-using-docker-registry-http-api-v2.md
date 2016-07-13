@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Tagging using Docker Registry HTTP API v2
+title: Tagging images using Docker Registry HTTP API v2
 comments: true
 ---
 
@@ -12,8 +12,8 @@ Docker Registry HTTP API v2 is incompatible with v1 and there's no dedicated met
 
 There are 2 manifest _schemas_ in v2 API:
 
-- version 1 which requires to use signed manifests
-- version 2 (available in Docker Registry >= 2.3) which allows you to use non-signed ones
+- _version 1_ which requires to use signed manifests
+- _version 2_ (available in Docker Registry >= 2.3) which allows you to use non-signed ones
 
 Working with version 2 is much simpler and that's why we're going to use it.
 
