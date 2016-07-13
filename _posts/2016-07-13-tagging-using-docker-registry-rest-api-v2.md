@@ -6,14 +6,14 @@ comments: true
 
 ## Problem
 
-Docker Registry API v2 is incompatible with v1 and there's no dedicated method to tag an existing image. Instead you should deal with image _manifests_.
+Docker Registry HTTP API v2 is incompatible with v1 and there's no dedicated method to tag an existing image. Instead you should deal with image _manifests_.
 
 ## Solution
 
 There are 2 manifest _schemas_ in v2 API:
 
 - version 1 which requires to use signed manifests
-- version 2 (available in Docker Registry >= 2.3) which allows you to use not-signed ones
+- version 2 (available in Docker Registry >= 2.3) which allows you to use non-signed ones
 
 Working with version 2 is much simpler and that's why we're going to use it.
 
@@ -23,21 +23,34 @@ The idea is very simple:
 
 ## Step-by-step guide
 
-- Start registry 2.4: `docker run -p 5000:5000 registry:2.4`
+- Prerequisites:
+
+```sh
+$ docker --version
+Docker version 1.10.3, build 9419b24-unsupported
+$ registry --version
+registry github.com/docker/distribution v2.4.0+unknown
+```
+
+- Start registry 2.4:
+
+```sh
+$ sudo registry serve /etc/docker-distribution/registry/config.yml
+```
 
 - Install an image in the registry:
 
 ```sh
-docker pull busybox
-docker tag busybox localhost:5000/mybusybox
-docker push localhost:5000/mybusybox
+$ sudo docker pull busybox
+$ sudo docker tag busybox localhost:5000/mybusybox
+$ sudo docker push localhost:5000/mybusybox
 ```
 
-- Get manifest for the uploaded image:
+- Get manifest of the uploaded image:
 
 ```sh
-curl 'http://localhost:5000/v2/mybusybox/manifests/latest' \
--H "accept: application/vnd.docker.distribution.manifest.v2+json" \
+$ curl 'http://localhost:5000/v2/mybusybox/manifests/latest' \
+-H 'accept: application/vnd.docker.distribution.manifest.v2+json' \
 > manifest.json
 ```
 Result (`manifest.json`):
@@ -60,12 +73,20 @@ Result (`manifest.json`):
    ]
 }
 ```
+
 - Upload the manifest under a new tag:
 
 ```sh
-'http://192.168.99.100:5000/v2/mybusybox/manifests/new_tag' \
--H "content-type: application/vnd.docker.distribution.manifest.v2+json" \
+$ curl -XPUT 'http://localhost:5000/v2/mybusybox/manifests/new_tag' \
+-H 'content-type: application/vnd.docker.distribution.manifest.v2+json' \
 -d '@manifest.json'
+```
+
+- Check that the new tag has been created:
+
+```sh
+$ curl 'http://localhost:5000/v2/mybusybox/tags/list'
+{"name":"mybusybox","tags":["latest","new_tag"]}
 ```
 
 ## Known issues
