@@ -53,7 +53,7 @@ $ curl 'http://localhost:5000/v2/mybusybox/manifests/latest' \
 -H 'accept: application/vnd.docker.distribution.manifest.v2+json' \
 > manifest.json
 ```
-Result (`manifest.json`):
+Result from `manifest.json` (notice that `schemaVersion` is 2):
 
 ```json
 {
